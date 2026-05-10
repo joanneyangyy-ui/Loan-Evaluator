@@ -1,2 +1,2 @@
 # Loan-Evaluator
-Help bank to screen loan applicants
+Bank loan screening tool - MMA867 Team Eglinton
