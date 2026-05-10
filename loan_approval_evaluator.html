@@ -1,0 +1,226 @@
+
+<h2 class="sr-only">Bank loan approval evaluation tool — enter applicant details to get an AI-powered approval prediction</h2>
+
+<style>
+  :root { --navy: #0F2D4A; --green50: #EAF3DE; --green800: #27500A; --red50: #FCEBEB; --red800: #791F1F; --amber50: #FAEEDA; --amber800: #633806; }
+  .app { max-width: 680px; padding: 1.5rem 0 2rem; }
+  .header { margin-bottom: 1.75rem; }
+  .header h1 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 4px; }
+  .header p { font-size: 13px; color: var(--color-text-secondary); margin: 0; }
+  .section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-tertiary); margin: 0 0 10px; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; color: var(--color-text-secondary); }
+  .field input, .field select { width: 100%; box-sizing: border-box; }
+  .result-card { border-radius: var(--border-radius-lg); padding: 1.5rem; margin-bottom: 1rem; border: 0.5px solid var(--color-border-tertiary); }
+  .result-card.approved { background: var(--color-background-success); border-color: var(--color-border-success); }
+  .result-card.denied { background: var(--color-background-danger); border-color: var(--color-border-danger); }
+  .result-card.pending { background: var(--color-background-secondary); }
+  .verdict { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .approved .verdict { color: var(--color-text-success); }
+  .denied .verdict { color: var(--color-text-danger); }
+  .pending .verdict { color: var(--color-text-secondary); }
+  .verdict-sub { font-size: 13px; color: var(--color-text-secondary); }
+  .approved .verdict-sub { color: var(--color-text-success); opacity: 0.85; }
+  .denied .verdict-sub { color: var(--color-text-danger); opacity: 0.85; }
+  .prob-bar-wrap { margin: 1.25rem 0 0.5rem; }
+  .prob-label-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .prob-bar-bg { height: 8px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+  .prob-bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+  .factors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1rem; }
+  .factor { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 6px 10px; border-radius: var(--border-radius-md); }
+  .factor.pos { background: var(--color-background-success); color: var(--color-text-success); }
+  .factor.neg { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .factor.neu { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .factor i { font-size: 14px; flex-shrink: 0; }
+  .factor span { font-size: 11px; }
+  .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 1rem; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; }
+  .metric-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+  .metric-val { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+  .btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border: none; border-radius: var(--border-radius-md); padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; margin-top: 4px; }
+  .btn-primary:hover { opacity: 0.85; }
+  .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+</style>
+
+<div class="app">
+  <div class="header">
+    <h1><i class="ti ti-building-bank" aria-hidden="true" style="font-size:18px; vertical-align:-2px; margin-right:6px;"></i>Loan Approval Evaluator</h1>
+    <p>Logistic regression model trained on 50,000 applicant records · AUC 0.922 · Accuracy 83.9%</p>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Applicant profile</div>
+    <div class="grid3" style="margin-bottom: 12px;">
+      <div class="field"><label>Age</label><input type="number" id="age" value="35" min="18" max="90"></div>
+      <div class="field"><label>Annual income ($)</label><input type="number" id="income" value="55000" min="0"></div>
+      <div class="field">
+        <label>Employment status</label>
+        <select id="occ">
+          <option value="1.0">Employed</option>
+          <option value="0.5">Self-employed</option>
+          <option value="0.0">Student</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Years employed</label><input type="number" id="yrs_emp" value="8" min="0" max="50" step="0.1"></div>
+      <div class="field"><label>Savings &amp; assets ($)</label><input type="number" id="savings" value="5000" min="0"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Credit profile</div>
+    <div class="grid3" style="margin-bottom: 12px;">
+      <div class="field"><label>Credit score</label><input type="number" id="credit_score" value="680" min="300" max="850"></div>
+      <div class="field"><label>Credit history (yrs)</label><input type="number" id="credit_hist" value="7" min="0" max="40" step="0.1"></div>
+      <div class="field"><label>Current debt ($)</label><input type="number" id="debt" value="10000" min="0"></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Defaults on file</label><select id="defaults"><option value="0">No</option><option value="1">Yes</option></select></div>
+      <div class="field"><label>Delinquencies (2 yrs)</label><input type="number" id="delinq" value="0" min="0" max="20"></div>
+      <div class="field"><label>Derogatory marks</label><input type="number" id="derog" value="0" min="0" max="10"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Loan details</div>
+    <div class="grid2" style="margin-bottom: 12px;">
+      <div class="field"><label>Loan amount ($)</label><input type="number" id="loan_amt" value="30000" min="500"></div>
+      <div class="field"><label>Interest rate (%)</label><input type="number" id="int_rate" value="14" min="1" max="35" step="0.1"></div>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label>Product type</label>
+        <select id="product">
+          <option>Personal Loan</option>
+          <option>Credit Card</option>
+          <option>Line of Credit</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Loan purpose</label>
+        <select id="intent">
+          <option>Personal</option>
+          <option>Home Improvement</option>
+          <option>Education</option>
+          <option>Debt Consolidation</option>
+          <option>Medical</option>
+          <option>Business</option>
+        </select>
+      </div>
+      <div class="field"><label>Monthly payment ($)</label><input type="number" id="monthly" value="700" min="0"></div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="evaluate()"><i class="ti ti-calculator" aria-hidden="true"></i> Evaluate application</button>
+
+  <div id="result-area" style="margin-top: 1.25rem;"></div>
+</div>
+
+<script>
+const MEANS = [34.957, 0.801, 7.455, 50063, 643.61, 8.168, 3595.6, 14290, 0.0535, 0.5546, 0.1476, 33042, 15.499, 0.2857, 0.7020, 0.2340];
+const SCALES = [11.118, 0.329, 7.612, 32630, 64.73, 7.207, 13232, 13244, 0.225, 0.845, 0.413, 26116, 4.068, 0.1598, 0.4658, 0.1553];
+const COEFS = [0.0386, -0.0441, 0.2569, 0.2880, 1.6275, 0.6185, 0.0720, -0.4168, -2.5658, -0.6846, -0.4526, 0.1388, 0.3522, -1.1050, -0.4194, -0.4191];
+const INTERCEPT = -0.1173;
+
+function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+
+function evaluate() {
+  const age = +document.getElementById('age').value;
+  const occ = +document.getElementById('occ').value;
+  const yrs = +document.getElementById('yrs_emp').value;
+  const income = +document.getElementById('income').value;
+  const cs = +document.getElementById('credit_score').value;
+  const ch = +document.getElementById('credit_hist').value;
+  const sav = +document.getElementById('savings').value;
+  const debt = +document.getElementById('debt').value;
+  const def = +document.getElementById('defaults').value;
+  const delinq = +document.getElementById('delinq').value;
+  const derog = +document.getElementById('derog').value;
+  const lamt = +document.getElementById('loan_amt').value;
+  const irate = +document.getElementById('int_rate').value;
+  const monthly = +document.getElementById('monthly').value;
+
+  if (!income || !lamt) { alert('Please enter income and loan amount.'); return; }
+
+  const dti = income > 0 ? debt / income : 0;
+  const lti = income > 0 ? lamt / income : 0;
+  const pti = income > 0 ? (monthly * 12) / income : 0;
+
+  const raw = [age, occ, yrs, income, cs, ch, sav, debt, def, delinq, derog, lamt, irate, dti, lti, pti];
+  let logit = INTERCEPT;
+  for (let i = 0; i < raw.length; i++) {
+    logit += COEFS[i] * ((raw[i] - MEANS[i]) / SCALES[i]);
+  }
+  const prob = sigmoid(logit);
+  const pct = Math.round(prob * 100);
+
+  const approved = prob >= 0.5;
+
+  const factors = [];
+  const contribs = COEFS.map((c, i) => ({ name: i, val: c * ((raw[i] - MEANS[i]) / SCALES[i]) }));
+
+  const factorLabels = ['Age','Employment type','Years employed','Income','Credit score','Credit history','Savings','Current debt','Defaults on file','Delinquencies','Derogatory marks','Loan amount','Interest rate','Debt-to-income','Loan-to-income','Payment-to-income'];
+  const sorted = contribs.slice().sort((a,b) => Math.abs(b.val) - Math.abs(a.val)).slice(0, 6);
+  const fHtml = sorted.map(f => {
+    const cls = f.val > 0.05 ? 'pos' : f.val < -0.05 ? 'neg' : 'neu';
+    const icon = f.val > 0.05 ? 'ti-arrow-up' : f.val < -0.05 ? 'ti-arrow-down' : 'ti-minus';
+    return `<div class="factor ${cls}"><i class="ti ${icon}" aria-hidden="true"></i><span>${factorLabels[f.name]}</span></div>`;
+  }).join('');
+
+  const barColor = approved ? 'var(--color-text-success)' : pct > 40 ? 'var(--color-text-warning)' : 'var(--color-text-danger)';
+
+  const dtiPct = (dti * 100).toFixed(1);
+  const ltiPct = (lti * 100).toFixed(1);
+  const ptiPct = (pti * 100).toFixed(1);
+
+  const resultHtml = `
+    <div class="result-card ${approved ? 'approved' : 'denied'}">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+        <i class="ti ${approved ? 'ti-circle-check' : 'ti-circle-x'}" aria-hidden="true" style="font-size:22px;"></i>
+        <div class="verdict">${approved ? 'Likely Approved' : 'Likely Denied'}</div>
+      </div>
+      <div class="verdict-sub">Approval probability: ${pct}%</div>
+      <div class="prob-bar-wrap">
+        <div class="prob-label-row"><span>Deny</span><span>Approve</span></div>
+        <div class="prob-bar-bg">
+          <div class="prob-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Key risk ratios</div>
+      <div class="metrics-row">
+        <div class="metric">
+          <div class="metric-label">Debt-to-income</div>
+          <div class="metric-val" style="color: ${dti > 0.43 ? 'var(--color-text-danger)' : dti > 0.35 ? 'var(--color-text-warning)' : 'var(--color-text-success)'};">${dtiPct}%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Loan-to-income</div>
+          <div class="metric-val" style="color: ${lti > 1.5 ? 'var(--color-text-danger)' : lti > 1.0 ? 'var(--color-text-warning)' : 'var(--color-text-success)'};">${ltiPct}%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Payment-to-income</div>
+          <div class="metric-val" style="color: ${pti > 0.43 ? 'var(--color-text-danger)' : pti > 0.30 ? 'var(--color-text-warning)' : 'var(--color-text-success)'};">${ptiPct}%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Top contributing factors</div>
+      <div class="factors-grid">${fHtml}</div>
+    </div>
+
+    <div style="font-size: 11px; color: var(--color-text-tertiary); text-align: center; margin-top: 0.75rem;">
+      For decisioning support only. Not a substitute for a full credit review or regulatory compliance.
+    </div>
+  `;
+
+  document.getElementById('result-area').innerHTML = resultHtml;
+  document.getElementById('result-area').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
