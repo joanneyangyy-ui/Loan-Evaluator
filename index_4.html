@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loan Evaluator - Team Eglinton</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          background: #f1f3f5; color: #212529; }
+  header { background: #0F2D4A; color: white; padding: 0 2rem;
+            height: 60px; display: flex; align-items: center;
+            justify-content: space-between; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  .badge { font-size: 11px; background: rgba(255,255,255,0.15);
+            padding: 3px 10px; border-radius: 99px; }
+  .page { max-width: 680px; margin: 2rem auto; padding: 0 1rem 4rem; }
+  .card { background: white; border: 1px solid #dee2e6; border-radius: 10px;
+           padding: 1.5rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase;
+              letter-spacing: 0.08em; color: #6c757d; margin-bottom: 1rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+          margin-bottom: 12px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+           margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 500;
+                  color: #495057; margin-bottom: 4px; }
+  .field input, .field select {
+    width: 100%; height: 38px; border: 1px solid #ced4da;
+    border-radius: 6px; padding: 0 10px; font-size: 13px;
+    background: white; color: #212529; outline: none; }
+  .field input:focus, .field select:focus {
+    border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,0.15); }
+  #goBtn { width: 100%; height: 48px; background: #0F2D4A; color: white;
+            border: none; border-radius: 10px; font-size: 16px;
+            font-weight: 600; cursor: pointer; margin-top: 4px; }
+  #goBtn:hover { background: #1a4060; }
+  #resultBox { display: none; border-radius: 10px; padding: 1.5rem;
+               border: 1px solid; margin-top: 1rem; }
+  #resultBox.ok { background: #E1F5EE; border-color: #9FE1CB; }
+  #resultBox.no { background: #FCEBEB; border-color: #F7C1C1; }
+  #verdict { font-size: 30px; font-weight: 800; margin-bottom: 4px; }
+  #verdict.ok { color: #0F6E56; }
+  #verdict.no { color: #A32D2D; }
+  #probText { font-size: 14px; margin-bottom: 1rem; opacity: 0.8; }
+  .bar-wrap { height: 10px; background: #dee2e6; border-radius: 99px;
+               overflow: hidden; margin-bottom: 1.25rem; }
+  #bar { height: 100%; border-radius: 99px; transition: width 0.4s; }
+  .ratios { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+             margin-bottom: 1rem; }
+  .ratio { border-radius: 6px; padding: 10px 12px; border: 1px solid; }
+  .ratio .rl { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: 0.05em; opacity: 0.65; margin-bottom: 2px; }
+  .ratio .rv { font-size: 20px; font-weight: 700; }
+  .ratio .rb { font-size: 10px; opacity: 0.55; margin-top: 1px; }
+  .ratio.good { background: #E1F5EE; border-color: #9FE1CB; }
+  .ratio.good .rv { color: #0F6E56; }
+  .ratio.warn { background: #FAEEDA; border-color: #FAC775; }
+  .ratio.warn .rv { color: #BA7517; }
+  .ratio.bad  { background: #FCEBEB; border-color: #F7C1C1; }
+  .ratio.bad  .rv { color: #A32D2D; }
+  .note { font-size: 11px; color: #6c757d; text-align: center;
+           margin-top: 0.5rem; }
+  .stats { display: flex; gap: 2rem; justify-content: center;
+            margin-bottom: 1.5rem; }
+  .stat { text-align: center; }
+  .stat-v { font-size: 24px; font-weight: 700; color: #0F2D4A; }
+  .stat-l { font-size: 11px; color: #6c757d; text-transform: uppercase;
+             letter-spacing: 0.05em; }
+  .samples { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .sbtn { font-size: 12px; padding: 5px 14px; border-radius: 99px;
+           border: 1px solid #ced4da; background: white;
+           cursor: pointer; color: #495057; }
+  .sbtn:hover { background: #f1f3f5; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Loan Evaluator</h1>
+  <span class="badge">MMA867 - Team Eglinton</span>
+</header>
+
+<div class="page">
+
+  <div style="text-align:center; padding: 1.5rem 0 0.5rem;">
+    <div class="stats">
+      <div class="stat"><div class="stat-v">92.2%</div><div class="stat-l">AUC</div></div>
+      <div class="stat"><div class="stat-v">83.9%</div><div class="stat-l">Accuracy</div></div>
+      <div class="stat"><div class="stat-v">0.334</div><div class="stat-l">RMSE</div></div>
+    </div>
+    <p style="font-size:13px;color:#6c757d;margin-bottom:1rem;">
+      Logistic regression trained on 50,000 applicant records &middot; Best from 9 models tested
+    </p>
+  </div>
+
+  <div class="samples">
+    <span style="font-size:12px;color:#6c757d;align-self:center;">Try a sample:</span>
+    <button class="sbtn" id="sStrong">Strong applicant</button>
+    <button class="sbtn" id="sRisky">Risky applicant</button>
+    <button class="sbtn" id="sBorder">Borderline case</button>
+  </div>
+
+  <div class="card">
+    <h2>Applicant profile</h2>
+    <div class="row">
+      <div class="field"><label>Age</label><input type="number" id="f_age" value="35" min="18" max="90"></div>
+      <div class="field"><label>Annual income ($)</label><input type="number" id="f_income" value="65000" min="1"></div>
+      <div class="field"><label>Employment</label>
+        <select id="f_occ">
+          <option value="1">Employed</option>
+          <option value="0.5">Self-employed</option>
+          <option value="0">Student</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Years employed</label><input type="number" id="f_yrs" value="8" min="0" step="0.5"></div>
+      <div class="field"><label>Savings and assets ($)</label><input type="number" id="f_sav" value="8000" min="0"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Credit profile</h2>
+    <div class="row">
+      <div class="field"><label>Credit score</label><input type="number" id="f_cs" value="700" min="300" max="850"></div>
+      <div class="field"><label>Credit history (yrs)</label><input type="number" id="f_ch" value="8" min="0" step="0.5"></div>
+      <div class="field"><label>Current debt ($)</label><input type="number" id="f_debt" value="12000" min="0"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Defaults on file</label>
+        <select id="f_def"><option value="0">No</option><option value="1">Yes</option></select>
+      </div>
+      <div class="field"><label>Delinquencies (2 yrs)</label><input type="number" id="f_dlq" value="0" min="0"></div>
+      <div class="field"><label>Derogatory marks</label><input type="number" id="f_drg" value="0" min="0"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Loan details</h2>
+    <div class="row2">
+      <div class="field"><label>Loan amount ($)</label><input type="number" id="f_lamt" value="28000" min="500"></div>
+      <div class="field"><label>Interest rate (%)</label><input type="number" id="f_rate" value="13.5" min="1" max="35" step="0.1"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Product type</label>
+        <select id="f_prod">
+          <option>Personal Loan</option><option>Credit Card</option><option>Line of Credit</option>
+        </select>
+      </div>
+      <div class="field"><label>Loan purpose</label>
+        <select id="f_purp">
+          <option>Personal</option><option>Home Improvement</option><option>Education</option>
+          <option>Debt Consolidation</option><option>Medical</option><option>Business</option>
+        </select>
+      </div>
+      <div class="field"><label>Monthly payment ($)</label><input type="number" id="f_mpay" value="650" min="0"></div>
+    </div>
+  </div>
+
+  <button id="goBtn">Evaluate application</button>
+
+  <div id="resultBox">
+    <div id="verdict"></div>
+    <div id="probText"></div>
+    <div class="bar-wrap"><div id="bar"></div></div>
+    <div class="ratios">
+      <div class="ratio" id="r_dti">
+        <div class="rl">Debt-to-income</div>
+        <div class="rv" id="v_dti"></div>
+        <div class="rb">Ideal under 36%</div>
+      </div>
+      <div class="ratio" id="r_lti">
+        <div class="rl">Loan-to-income</div>
+        <div class="rv" id="v_lti"></div>
+        <div class="rb">Ideal under 100%</div>
+      </div>
+      <div class="ratio" id="r_pti">
+        <div class="rl">Pay-to-income</div>
+        <div class="rv" id="v_pti"></div>
+        <div class="rb">Ideal under 28%</div>
+      </div>
+    </div>
+    <div class="note">For academic demonstration only. Not a substitute for a full credit review. &copy; 2026 Team Eglinton &middot; MMA867</div>
+  </div>
+
+</div>
+
+<script>
+var C = [0.0386, -0.0441, 0.2569, 0.288, 1.6275, 0.6185, 0.072, -0.4168, -2.5658, -0.6846, -0.4526, 0.1388, 0.3522, -1.105, -0.4194, -0.4191];
+var M = [34.957, 0.801, 7.455, 50063, 643.61, 8.168, 3595.6, 14290, 0.0535, 0.5546, 0.1476, 33042, 15.499, 0.2857, 0.702, 0.234];
+var S = [11.118, 0.329, 7.612, 32630, 64.73, 7.207, 13232, 13244, 0.225, 0.845, 0.413, 26116, 4.068, 0.1598, 0.4658, 0.1553];
+var B = -0.1173;
+
+function gv(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function compute() {
+  var inc  = gv("f_income") || 1;
+  var debt = gv("f_debt");
+  var lamt = gv("f_lamt");
+  var mpay = gv("f_mpay");
+  var f = [
+    gv("f_age"), gv("f_occ"), gv("f_yrs"), inc,
+    gv("f_cs"),  gv("f_ch"),  gv("f_sav"), debt,
+    gv("f_def"), gv("f_dlq"), gv("f_drg"), lamt,
+    gv("f_rate"), debt/inc, lamt/inc, (mpay*12)/inc
+  ];
+  var z = B;
+  for (var i = 0; i < f.length; i++) z += C[i] * (f[i] - M[i]) / S[i];
+  var p = 1 / (1 + Math.exp(-z));
+  return { prob: p, dti: debt/inc, lti: lamt/inc, pti: (mpay*12)/inc };
+}
+
+function rc(v, w, b) { return v >= b ? "bad" : v >= w ? "warn" : "good"; }
+
+function runEval() {
+  var r   = compute();
+  var pct = Math.round(r.prob * 100);
+  var ok  = r.prob >= 0.5;
+
+  var box = document.getElementById("resultBox");
+  box.className = ok ? "ok" : "no";
+  box.style.display = "block";
+
+  var vEl = document.getElementById("verdict");
+  vEl.textContent = ok ? "Likely Approved" : "Likely Denied";
+  vEl.className = ok ? "ok" : "no";
+
+  document.getElementById("probText").textContent = "Approval probability: " + pct + "%";
+
+  var bar = document.getElementById("bar");
+  bar.style.width = pct + "%";
+  bar.style.background = ok ? "#1D9E75" : "#E24B4A";
+
+  function setRatio(rid, vid, val, w, b) {
+    document.getElementById(rid).className = "ratio " + rc(val, w, b);
+    document.getElementById(vid).textContent = (val * 100).toFixed(1) + "%";
+  }
+  setRatio("r_dti", "v_dti", r.dti, 0.36, 0.43);
+  setRatio("r_lti", "v_lti", r.lti, 1.00, 1.50);
+  setRatio("r_pti", "v_pti", r.pti, 0.28, 0.43);
+
+}
+
+document.getElementById("goBtn").addEventListener("click", runEval);
+
+var SAMPLES = {
+  strong:     [42, 1,   15, 85000, 750, 12, 25000, 8000,  0, 0, 0, 20000, 9.5,  650],
+  risky:      [24, 0.5,  1, 22000, 560,  1,   100, 18000, 1, 3, 2, 35000, 22.0, 800],
+  borderline: [34, 1,    5, 48000, 640,  6,  2000, 15000, 0, 1, 0, 40000, 14.5, 900]
+};
+var IDS = ["f_age","f_occ","f_yrs","f_income","f_cs","f_ch",
+           "f_sav","f_debt","f_def","f_dlq","f_drg","f_lamt","f_rate","f_mpay"];
+
+function loadSample(k) {
+  var v = SAMPLES[k];
+  for (var i = 0; i < IDS.length; i++) document.getElementById(IDS[i]).value = v[i];
+  runEval();
+}
+
+document.getElementById("sStrong").addEventListener("click", function() { loadSample("strong"); });
+document.getElementById("sRisky").addEventListener("click",  function() { loadSample("risky"); });
+document.getElementById("sBorder").addEventListener("click", function() { loadSample("borderline"); });
+</script>
+</body>
+</html>
